@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+		<title></title>
+		<style type="text/css">
+			*{
+				margin: 0;
+				padding: 0;
+			}
+			html,body{
+				height: 100%;
+				overflow: hidden;
+			}
+			#head,#header{
+				position: absolute;
+				top: 0;
+				height: 2rem;
+				width: 100%;
+				line-height: 2rem;
+				background: rgba(0,0,0,.8);
+				color: white;
+				text-align: center;
+			}
+			#header a{
+				color: white;
+				text-decoration: none;
+				float: right;
+				margin-right: 10px;
+				margin-left: -10px;
+			}
+			#wrap{
+				position: absolute;
+				top: 2rem;
+				bottom: 0;
+				width: 100%;
+				overflow: hidden;
+			}
+			
+			#img_list{
+				list-style: none;
+				overflow: hidden;
+			}
+			#img_list li{
+				float: left;
+				width: 7rem;
+				height: 7rem;
+				margin: .5rem;
+				background: url(img/loadingImg.gif) no-repeat center;
+			}
+			#img_list li img{
+				width: 100%;
+				display: block;
+				border-radius: 8px;
+				transition: 1s;
+				opacity: 0;
+			}
+			#footer{
+				position: absolute;
+				bottom: -4rem;
+				width: 100%;
+				height: 4rem;
+				font: .8rem/4rem "宋体";
+				text-align: center;
+			}
+			#scrollBar{
+				height: 100%;
+				width: 4px;
+				position: absolute;
+				top: 0;
+				right: 0;
+				background: green;
+				opacity: 0;
+				transition: 1s opacity;
+			}
+			#bigImg{
+				position: absolute;
+				top:0;
+				left: 0;
+				z-index: 999;
+				height: 100%;
+				width: 100%;
+				background-color: #eeeeee;
+				transform: scale(0);
+				transition: 1s transform;
+
+			}
+			#img{
+				position: absolute;
+				top:2rem;
+				bottom: 0;
+				width: 100%;
+			}
+			#imgInner{
+				position: absolute;
+				top:50%;
+				left: 50%;
+				transform: translateX(-50%) translateY(-50%);
+				height: 11rem;
+				width: 11rem;
+				background-color: red;
+				border-radius: 10px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="head">
+			三国女将
+		</div>
+		<div id="wrap">
+			<div id="content">
+				<ul id="img_list">
+				</ul>
+				<div id="footer">
+					上滑加载更多
+				</div>
+				
+			</div>
+			<div id="scrollBar">
+					
+			</div>
+		</div>
+		<div id="bigImg">
+			<div id="header">
+				大图预览<a id="close" href="javascript:;">x</a>
+			</div>
+			<div id="img">
+				<img src="" alt="" id="imgInner">
+			</div>
+		</div>
+	</body>
+	<script src="js/transform.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+		//清除系统默认行为
+		document.addEventListener('touchstart',function(ev){
+			ev = ev || event
+			ev.preventDefault()
+		});
+		//rem适配方案
+		(function(){
+			
+			var width = document.documentElement.clientWidth/16
+			var styleNode = document.createElement('style')
+			styleNode.innerHTML = 'html{font-size:'+width+'px!important}'
+			document.head.appendChild(styleNode)
+			//一像素适配方案
+//			var dir = window.devicePixelRatio || 1
+//			var scale = 1/dir;
+//			var width = dir*document.documentElement.clientWidth/16
+//			var meta = document.querySelector('meta[name="viewport"]')
+//			meta.setAttribute('content','width=device-width,initial-scale='+scale+',user-scalable=no')
+//			var styleNode = document.createElement('style')
+//			styleNode.innerHTML = 'html{fontSize:'+width+'px!important}'
+//			document.head.appendChild(styleNode)
+		})()
+		
+		var imgArr = []
+		for(var i = 0; i < 4;i++){
+			for(var j = 1; j < 11;j++){
+				imgArr.push('img/'+j+'.jpg')
+			}
+		}
+		
+		window.onload = function(){
+		  var bigImg = document.getElementById('bigImg')
+			var imgInner = document.getElementById('imgInner')
+			var close = document.getElementById('close')
+			var scrollBar = document.getElementById('scrollBar')
+			var wrap = document.getElementById('wrap')
+			var content = document.getElementById('content')
+			var maxScroll = content.offsetHeight - wrap.clientHeight
+			var isBottom = false;
+			var load = false;
+			var imgList = document.getElementById('img_list')
+			var lis = imgList.getElementsByTagName('li')
+			var head = document.getElementById('head')
+			var footer = document.getElementById('footer')
+			var footerH = footer.offsetHeight;
+			css(footer,'scale',0)
+			var minT = head.offsetHeight
+			var maxT = document.documentElement.clientHeight
+			var length = 12;
+			var start = 0;
+			var isOver = false;
+			var heightScale;
+			
+			createLi()
+			function createLi(){
+				var end = start + length
+				if(start >= imgArr.length-1){
+					isOver = true;
+					footer.innerHTML="大兄弟 没有了";
+					setTimeout(function(){
+						content.style.transition="0.5s";
+						css(content,"translateY",-maxScroll);
+						css(footer,"scale",0);
+						footer.innerHTML="";
+					},1000)
+					return;
+				}
+					
+				end = end > (imgArr.length-1)?imgArr.length-1:end
+				for (var i = start; i < end; i++) {
+					var li = document.createElement('li')
+					li.src = imgArr[i]
+					li.isload = false;
+					//为每个li添加touchend事件，放大，还要防止误触
+					li.addEventListener('touchmove',function () {
+						this.move = true;
+          });
+          li.addEventListener('touchend',function () {
+            if(!this.move){
+              var origin = this.getBoundingClientRect().left + 'px ' + this.getBoundingClientRect().top + 'px'
+              bigImg.style.transformOrigin = origin
+              css(bigImg,'scale',1)
+              imgInner.src = this.src
+						}
+            this.move = false;
+          });
+
+					imgList.appendChild(li)
+				}
+				start = end
+				css(footer,"scale",0);
+				lazyload()
+			}
+			function lazyload(){
+				for(var i = 0; i < lis.length;i++){
+					var litop = lis[i].getBoundingClientRect().top
+					if(!lis[i].isload&&litop>minT&&litop<maxT){
+						createImg(lis[i])
+						lis[i].isload = true;
+					}
+				}
+			}
+			function createImg(linode){
+				var img = new Image()
+				img.src = linode.src
+				img.onload = function(){
+					img.style.opacity = 1
+				}
+				linode.appendChild(img)
+			}
+			barH();
+			function barH(){
+				heightScale = wrap.clientHeight/content.offsetHeight
+				var H = wrap.clientHeight * heightScale
+				scrollBar.style.height = H + 'px'
+			}
+			var dragcallback = {
+				start: function(){
+					content.style.transition="none";
+					scrollBar.style.opacity = 1
+					//判断content是否已经滚动到最底部
+					var nowY = Math.abs(css(content,'translateY'))
+					maxScroll = content.offsetHeight - wrap.clientHeight
+					if(nowY >= maxScroll){
+						isBottom = true;
+					}
+					
+				},
+				move: function(){
+					var translateY = Math.abs(css(content,'translateY'))*heightScale
+					css(scrollBar,'translateY',translateY)
+					if(isBottom){
+						var scale = (Math.abs(css(content,'translateY')) - maxScroll)/footerH
+						load = scale >= 1? true:false
+						scale = Math.abs(scale)>1?1:Math.abs(scale)
+						css(footer,'scale',scale)
+					}
+					lazyload()
+				},
+				end:function(){
+					
+					if(load&&!isOver){
+						//加载
+						clearInterval(wrap.cleartime);
+						createLi()
+						barH()
+					}
+					isBottom = false;
+					load = false;
+				},
+				over:function(){
+					scrollBar.style.opacity = 0
+				}
+			};
+			
+			$.drag(wrap,content,dragcallback);
+
+			//给close添加touchend关闭大图事件
+      close.addEventListener('touchend',function () {
+				css(bigImg,'scale',0)
+      });
+			//给bigImg添加缩放和旋转
+      var data = {};
+      var gestruecallback = {
+        start: function () {
+          data.scale = css(imgInner,'scale');
+          data.rotation = css(imgInner,'rotate');
+        },
+        move: function (ev) {
+          css(imgInner,'scale',ev.scale * data.scale);
+          css(imgInner,'rotate',ev.rotation + data.rotation)
+        }
+      };
+
+			$.gestrue(imgInner,gestruecallback)
+
+		}
+		
+	</script>
+</html>
