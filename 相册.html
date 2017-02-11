@@ -94,10 +94,13 @@
 			}
 			#imgInner{
 				position: absolute;
-				top:50%;
-				left: 50%;
-				transform: translateX(-50%) translateY(-50%);
-				height: 11rem;
+				top:0;
+				left: 0;
+        bottom: 0;
+        right: 0;
+        margin: auto;
+				/*transform: translateX(-50%) translateY(-50%);*/
+        height: 11rem;
 				width: 11rem;
 				background-color: red;
 				border-radius: 10px;
@@ -291,7 +294,9 @@
 
 			//给close添加touchend关闭大图事件
       close.addEventListener('touchend',function () {
-				css(bigImg,'scale',0)
+				css(bigImg,'scale',0);
+        css(imgInner,'scale',1);
+        css(imgInner,'rotate',0);
       });
 			//给bigImg添加缩放和旋转
       var data = {};
