@@ -187,7 +187,7 @@
 			var start = 0;
 			var isOver = false;
 			var heightScale;
-			
+			var toDefault = false;
 			createLi()
 			function createLi(){
 				var end = start + length
@@ -293,11 +293,17 @@
 			$.drag(wrap,content,dragcallback);
 
 			//给close添加touchend关闭大图事件
-      close.addEventListener('touchend',function () {
-				css(bigImg,'scale',0)
-	     			 css(imgInner,'scale',1);
-       				 css(imgInner,'rotate',0);
+     close.addEventListener('touchend',function () {
+				css(bigImg,'scale',0);
+        toDefault = true;
       });
+      bigImg.addEventListener('transitionend',function () {
+        if(toDefault){
+          css(imgInner,'scale',1);
+          css(imgInner,'rotate',0);
+        }
+        toDefault = false;
+      })
 			//给bigImg添加缩放和旋转
       var data = {};
       var gestruecallback = {
